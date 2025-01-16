@@ -13,7 +13,7 @@
     --input-bg: #ffffff;
     --shadow-color: rgba(0, 0, 0, 0.1);
     --code-bg: #ececec;
-    --code-text: #1a1a1a;
+    --code-text: #edecec;
     --code-header-bg: #f1f1f1;
     --time-text: #666666;
 }
@@ -217,20 +217,21 @@ button:disabled {
 }
 
 .code-container {
-    background-color: var(--code-bg);
-    border-radius: 8px;
+    background: #1e1e1e;
+    border-radius: 4px;
     margin: 10px 0;
-    border: 1px solid var(--code-border);
-    overflow: hidden;
 }
 
-.code-header {
-    background-color: var(--code-header-bg);
-    padding: 8px 16px;
-    font-family: monospace;
-    font-size: 0.9rem;
-    color: var(--text-color);
-    border-bottom: 1px solid var(--border-color);
+/* Style adjustments for the code container */
+.code-container pre code {
+    background: transparent !important;
+    padding: 0 !important;
+}
+
+/* Make sure horizontal scroll works properly */
+.code-container pre {
+    white-space: pre;
+    word-wrap: normal;
 }
 
 .code-explanation {
@@ -243,17 +244,56 @@ button:disabled {
 
 pre {
     margin: 0;
-    padding: 16px;
+    padding: 12px;
     overflow-x: auto;
-    background-color: var(--code-bg);
 }
 
 code {
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-    font-size: 0.9rem;
-    line-height: 1.4;
-    color: var(--code-text);
+    font-size: 14px;
+    line-height: 1.5;
 }
+
+.code-button {
+    padding: 4px 8px;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    color: inherit;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+.code-button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.code-header {
+    padding: 8px 12px;
+    background: #343541;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    font-family: monospace;
+    color: #fff;
+    font-size: 14px;
+}
+
+/* For dark theme compatibility */
+[data-theme='dark'] .code-button {
+    border-color: rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+
+[data-theme='dark'] .code-button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+
 
 /* History Sidebar Styles */
 .history-sidebar {
@@ -381,7 +421,7 @@ code {
 [data-theme="dark"] .hljs-class { color: #4ec9b0; }
 [data-theme="dark"] .hljs-variable { color: #9cdcfe; }
 
-.hljs-keyword { color: #0000ff; }
+.hljs-keyword { color: #569cd6; }
 .hljs-string { color: #a31515; }
 .hljs-number { color: #098658; }
 .hljs-comment { color: #008000; }

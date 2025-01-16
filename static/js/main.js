@@ -96,75 +96,146 @@ async function sendMessage() {
         inputElement.focus();
     }
 }
-
-// function addMessageToChat(role, messageData, generationTime = null) {
-//     const messagesContainer = document.getElementById('chat-messages');
-//     const messageDiv = document.createElement('div');
-//     messageDiv.className = `message ${role}-message`;
+// No copy button and download button
+// function formatCodeMessage(messageDiv, codeContent,language = 'text') {
+//     const codeContainer = document.createElement('div');
+//     codeContainer.className = 'code-container';
     
-//     if (messageData.type === 'text') {
-//         const contentDiv = document.createElement('div');
-//         contentDiv.className = 'message-content';
-//         contentDiv.textContent = messageData.content.message;
-//         messageDiv.appendChild(contentDiv);
-//     }
-//     else if (messageData.type === 'code') {
-//         if (messageData.content.explanation) {
-//             const explanationDiv = document.createElement('div');
-//             explanationDiv.className = 'code-explanation';
-//             explanationDiv.textContent = messageData.content.explanation;
-//             messageDiv.appendChild(explanationDiv);
-//         }
-        
-//         const codeContainer = document.createElement('div');
-//         codeContainer.className = 'code-container';
-        
-//         const codeHeader = document.createElement('div');
-//         codeHeader.className = 'code-header';
-//         codeHeader.textContent = messageData.content.language || 'text';
-        
-//         const codeBlock = document.createElement('pre');
-//         const codeContent = document.createElement('code');
-//         codeContent.className = `language-${messageData.content.language || 'text'}`;
-//         codeContent.textContent = messageData.content.code;
-        
-//         codeBlock.appendChild(codeContent);
-//         codeContainer.appendChild(codeHeader);
-//         codeContainer.appendChild(codeBlock);
-//         messageDiv.appendChild(codeContainer);
-//     }
+//     // Add language header
+//     const headerDiv = document.createElement('div');
+//     headerDiv.className = 'code-header';
+//     headerDiv.textContent = language || 'text';  // Fallback to 'text' if no language specified
+//     codeContainer.appendChild(headerDiv);
     
-//     if (role === 'bot' && generationTime !== null) {
-//         const timeDiv = document.createElement('div');
-//         timeDiv.className = 'generation-time';
-//         timeDiv.textContent = `Response generated in ${generationTime}s`;
-//         messageDiv.appendChild(timeDiv);
-//     }
+//     // Add code content with proper formatting
+//     const preElement = document.createElement('pre');
+//     const codeElement = document.createElement('code');
+//     codeElement.className = `language-${language || 'text'}`;
     
-//     messagesContainer.appendChild(messageDiv);
-//     messagesContainer.scrollTop = messagesContainer.scrollHeight;
-
-//     if (messageData.type === 'code' && window.hljs) {
-//         messageDiv.querySelectorAll('pre code').forEach((block) => {
-//             hljs.highlightElement(block);
-//         });
+//     // Ensure proper indentation and formatting
+//     const formattedCode = codeContent.trim()
+//         .replace(/</g, '&lt;')
+//         .replace(/>/g, '&gt;');
+    
+//     codeElement.innerHTML = formattedCode;
+//     preElement.appendChild(codeElement);
+//     codeContainer.appendChild(preElement);
+    
+//     messageDiv.appendChild(codeContainer);
+    
+//     // Initialize syntax highlighting
+//     if (window.hljs) {
+//         hljs.highlightElement(codeElement);
 //     }
 // }
 
-function formatCodeMessage(messageDiv, codeContent,language = 'text') {
+function formatCodeMessage(messageDiv, codeContent, language = 'text') {
     const codeContainer = document.createElement('div');
     codeContainer.className = 'code-container';
     
-    // Add language header
+    // Create header container
     const headerDiv = document.createElement('div');
     headerDiv.className = 'code-header';
-    headerDiv.textContent = language || 'text';  // Fallback to 'text' if no language specified
+    headerDiv.style.display = 'flex';
+    headerDiv.style.justifyContent = 'space-between';
+    headerDiv.style.alignItems = 'center';
+    
+    const languageSpan = document.createElement('span');
+    const languageMap = {
+        'python': 'Python',
+        'py': 'Python',
+        'javascript': 'JavaScript',
+        'js': 'JavaScript',
+        'java': 'Java',
+        'cpp': 'C++',
+        'c++': 'C++',
+        'c': 'C',
+        'csharp': 'C#',
+        'cs': 'C#',
+        'html': 'HTML',
+        'css': 'CSS',
+        'sql': 'SQL',
+        'php': 'PHP',
+        'ruby': 'Ruby',
+        'rb': 'Ruby',
+        'go': 'Go',
+        'rust': 'Rust',
+        'typescript': 'TypeScript',
+        'ts': 'TypeScript'
+    };
+    
+    // Preserve exact case and special characters for C++ and C#
+    const normalizedLang = language.toLowerCase();
+    languageSpan.textContent = languageMap[normalizedLang] || language;
+    
+    // Special handling for C++ to ensure it's displayed correctly
+    if (normalizedLang === 'cpp' || normalizedLang === 'c++') {
+        languageSpan.textContent = 'C++';
+    }
+    
+    headerDiv.appendChild(languageSpan);
+    
+    // Buttons container
+    const buttonsContainer = document.createElement('div');
+    buttonsContainer.className = 'code-header-buttons';
+    buttonsContainer.style.display = 'flex';
+    buttonsContainer.style.gap = '8px';
+    
+    // Copy button
+    const copyButton = document.createElement('button');
+    copyButton.className = 'code-button';
+    copyButton.innerHTML = '<i class="material-icons" style="font-size: 16px;">content_copy</i>';
+    copyButton.title = 'Copy code';
+    copyButton.onclick = async () => {
+        try {
+            await navigator.clipboard.writeText(codeContent);
+            copyButton.innerHTML = '<i class="material-icons" style="font-size: 16px;">check</i>';
+            setTimeout(() => {
+                copyButton.innerHTML = '<i class="material-icons" style="font-size: 16px;">content_copy</i>';
+            }, 2000);
+        } catch (err) {
+            console.error('Failed to copy code:', err);
+        }
+    };
+    
+    // Download button
+    const downloadButton = document.createElement('button');
+    downloadButton.className = 'code-button';
+    downloadButton.innerHTML = '<i class="material-icons" style="font-size: 16px;">download</i>';
+    downloadButton.title = 'Download code';
+    downloadButton.onclick = () => {
+        const blob = new Blob([codeContent], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const extension = language.toLowerCase() === 'python' ? 'py' : 
+                         language.toLowerCase() === 'javascript' ? 'js' :
+                         language.toLowerCase() === 'java' ? 'java' :
+                         language.toLowerCase() === 'cpp' || language.toLowerCase() === 'c++' ? 'cpp' :
+                         'txt';
+        a.download = `code.${extension}`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
+    
+    buttonsContainer.appendChild(copyButton);
+    buttonsContainer.appendChild(downloadButton);
+    headerDiv.appendChild(buttonsContainer);
     codeContainer.appendChild(headerDiv);
     
-    // Add code content with proper formatting
+    // Add code content
     const preElement = document.createElement('pre');
     const codeElement = document.createElement('code');
-    codeElement.className = `language-${language || 'text'}`;
+    //codeElement.className = `language-${language.toLowerCase()}`;
+
+    // Handle language class for syntax highlighting
+    let highlightLanguage = language.toLowerCase();
+    if (highlightLanguage === 'c++' || highlightLanguage === 'cpp') {
+        highlightLanguage = 'cpp';
+    }
+    codeElement.className = `language-${highlightLanguage}`;
     
     // Ensure proper indentation and formatting
     const formattedCode = codeContent.trim()
@@ -184,31 +255,88 @@ function formatCodeMessage(messageDiv, codeContent,language = 'text') {
 }
 
 // Update the addMessageToChat function to include this section:
+// function addMessageToChat(role, messageData, generationTime = null) {
+//     const messagesContainer = document.getElementById('chat-messages');
+//     const messageDiv = document.createElement('div');
+//     messageDiv.className = `message ${role}-message`;
+    
+//     if (messageData.type === 'code') {
+//         // Add explanation if present
+//         if (messageData.content.explanation) {
+//             const explanationDiv = document.createElement('div');
+//             explanationDiv.className = 'code-explanation';
+//             explanationDiv.textContent = messageData.content.explanation;
+//             messageDiv.appendChild(explanationDiv);
+//         }
+        
+//         // Format and add the code
+//         formatCodeMessage(messageDiv, messageData.content.code, messageData.content.language);
+//     } else {
+//         // Handle regular text messages
+//         const contentDiv = document.createElement('div');
+//         contentDiv.className = 'message-content';
+//         contentDiv.textContent = messageData.content.message;
+//         messageDiv.appendChild(contentDiv);
+//     }
+    
+//     // Add generation time for bot messages
+//     if (role === 'bot' && generationTime !== null) {
+//         const timeDiv = document.createElement('div');
+//         timeDiv.className = 'generation-time';
+//         timeDiv.textContent = `Response generated in ${generationTime}s`;
+//         messageDiv.appendChild(timeDiv);
+//     }
+    
+//     messagesContainer.appendChild(messageDiv);
+//     messagesContainer.scrollTop = messagesContainer.scrollHeight;
+// }
+
 function addMessageToChat(role, messageData, generationTime = null) {
     const messagesContainer = document.getElementById('chat-messages');
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${role}-message`;
     
     if (messageData.type === 'code') {
-        // Add explanation if present
-        if (messageData.content.explanation) {
-            const explanationDiv = document.createElement('div');
-            explanationDiv.className = 'code-explanation';
-            explanationDiv.textContent = messageData.content.explanation;
-            messageDiv.appendChild(explanationDiv);
-        }
+        // Extract code and explanation from the content
+        const fullContent = messageData.content.code
         
-        // Format and add the code
-        formatCodeMessage(messageDiv, messageData.content.code, messageData.content.language);
-    } else {
-        // Handle regular text messages
+        // Find the code block with language identifier
+        const codeMatch = fullContent.match(/```([\w+#]+)?\s*([\s\S]*?)```/);
+        
+        if (codeMatch) {
+            // Extract language and code
+            const language = codeMatch[1] || 'text'; // Language identifier
+            const code = codeMatch[2].trim(); // The actual code
+            
+            // Get content before the first code block
+            const beforeCode = fullContent.substring(0, fullContent.indexOf('```')).trim();
+            if (beforeCode) {
+                const beforeExplanationDiv = document.createElement('div');
+                beforeExplanationDiv.className = 'message-content';
+                beforeExplanationDiv.textContent = beforeCode;
+                messageDiv.appendChild(beforeExplanationDiv);
+            }
+            
+            // Format and add the code block with the correct language
+            formatCodeMessage(messageDiv, code, language);
+            
+            // Get content after the last code block
+            const afterLastBacktick = fullContent.substring(fullContent.lastIndexOf('```') + 3).trim();
+            if (afterLastBacktick) {
+                const afterExplanationDiv = document.createElement('div');
+                afterExplanationDiv.className = 'message-content';
+                afterExplanationDiv.textContent = afterLastBacktick;
+                messageDiv.appendChild(afterExplanationDiv);
+            }
+        }
+    }
+    else {
         const contentDiv = document.createElement('div');
         contentDiv.className = 'message-content';
         contentDiv.textContent = messageData.content.message;
         messageDiv.appendChild(contentDiv);
     }
     
-    // Add generation time for bot messages
     if (role === 'bot' && generationTime !== null) {
         const timeDiv = document.createElement('div');
         timeDiv.className = 'generation-time';
