@@ -96,38 +96,6 @@ async function sendMessage() {
         inputElement.focus();
     }
 }
-// No copy button and download button
-// function formatCodeMessage(messageDiv, codeContent,language = 'text') {
-//     const codeContainer = document.createElement('div');
-//     codeContainer.className = 'code-container';
-    
-//     // Add language header
-//     const headerDiv = document.createElement('div');
-//     headerDiv.className = 'code-header';
-//     headerDiv.textContent = language || 'text';  // Fallback to 'text' if no language specified
-//     codeContainer.appendChild(headerDiv);
-    
-//     // Add code content with proper formatting
-//     const preElement = document.createElement('pre');
-//     const codeElement = document.createElement('code');
-//     codeElement.className = `language-${language || 'text'}`;
-    
-//     // Ensure proper indentation and formatting
-//     const formattedCode = codeContent.trim()
-//         .replace(/</g, '&lt;')
-//         .replace(/>/g, '&gt;');
-    
-//     codeElement.innerHTML = formattedCode;
-//     preElement.appendChild(codeElement);
-//     codeContainer.appendChild(preElement);
-    
-//     messageDiv.appendChild(codeContainer);
-    
-//     // Initialize syntax highlighting
-//     if (window.hljs) {
-//         hljs.highlightElement(codeElement);
-//     }
-// }
 
 function formatCodeMessage(messageDiv, codeContent, language = 'text') {
     const codeContainer = document.createElement('div');
@@ -254,32 +222,53 @@ function formatCodeMessage(messageDiv, codeContent, language = 'text') {
     }
 }
 
-// Update the addMessageToChat function to include this section:
+//Worked for some cases failed for some cases
 // function addMessageToChat(role, messageData, generationTime = null) {
 //     const messagesContainer = document.getElementById('chat-messages');
 //     const messageDiv = document.createElement('div');
 //     messageDiv.className = `message ${role}-message`;
     
 //     if (messageData.type === 'code') {
-//         // Add explanation if present
-//         if (messageData.content.explanation) {
-//             const explanationDiv = document.createElement('div');
-//             explanationDiv.className = 'code-explanation';
-//             explanationDiv.textContent = messageData.content.explanation;
-//             messageDiv.appendChild(explanationDiv);
-//         }
+//         // Extract code and explanation from the content
+//         const fullContent = messageData.content.code
         
-//         // Format and add the code
-//         formatCodeMessage(messageDiv, messageData.content.code, messageData.content.language);
-//     } else {
-//         // Handle regular text messages
+//         // Find the code block with language identifier
+//         const codeMatch = fullContent.match(/```([\w+#]+)?\s*([\s\S]*?)```/);
+        
+//         if (codeMatch) {
+//             // Extract language and code
+//             const language = codeMatch[1] || 'text'; // Language identifier
+//             const code = codeMatch[2].trim(); // The actual code
+            
+//             // Get content before the first code block
+//             const beforeCode = fullContent.substring(0, fullContent.indexOf('```')).trim();
+//             if (beforeCode) {
+//                 const beforeExplanationDiv = document.createElement('div');
+//                 beforeExplanationDiv.className = 'message-content';
+//                 beforeExplanationDiv.textContent = beforeCode;
+//                 messageDiv.appendChild(beforeExplanationDiv);
+//             }
+            
+//             // Format and add the code block with the correct language
+//             formatCodeMessage(messageDiv, code, language);
+            
+//             // Get content after the last code block
+//             const afterLastBacktick = fullContent.substring(fullContent.lastIndexOf('```') + 3).trim();
+//             if (afterLastBacktick) {
+//                 const afterExplanationDiv = document.createElement('div');
+//                 afterExplanationDiv.className = 'message-content';
+//                 afterExplanationDiv.textContent = afterLastBacktick;
+//                 messageDiv.appendChild(afterExplanationDiv);
+//             }
+//         }
+//     }
+//     else {
 //         const contentDiv = document.createElement('div');
 //         contentDiv.className = 'message-content';
 //         contentDiv.textContent = messageData.content.message;
 //         messageDiv.appendChild(contentDiv);
 //     }
     
-//     // Add generation time for bot messages
 //     if (role === 'bot' && generationTime !== null) {
 //         const timeDiv = document.createElement('div');
 //         timeDiv.className = 'generation-time';
@@ -296,47 +285,67 @@ function addMessageToChat(role, messageData, generationTime = null) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${role}-message`;
     
+    // Handle different message types
     if (messageData.type === 'code') {
-        // Extract code and explanation from the content
-        const fullContent = messageData.content.code
+        // Ensure content exists and handle both string and object formats
+        const fullContent = typeof messageData.content === 'string' 
+            ? messageData.content 
+            : messageData.content.code || '';
         
-        // Find the code block with language identifier
-        const codeMatch = fullContent.match(/```([\w+#]+)?\s*([\s\S]*?)```/);
+        // More robust code block detection
+        const codeBlockRegex = /```([\w+#]*)\s*([\s\S]*?)```/g;
+        let lastIndex = 0;
+        let match;
+        let hasCodeBlock = false;
         
-        if (codeMatch) {
-            // Extract language and code
-            const language = codeMatch[1] || 'text'; // Language identifier
-            const code = codeMatch[2].trim(); // The actual code
+        while ((match = codeBlockRegex.exec(fullContent)) !== null) {
+            hasCodeBlock = true;
             
-            // Get content before the first code block
-            const beforeCode = fullContent.substring(0, fullContent.indexOf('```')).trim();
-            if (beforeCode) {
-                const beforeExplanationDiv = document.createElement('div');
-                beforeExplanationDiv.className = 'message-content';
-                beforeExplanationDiv.textContent = beforeCode;
-                messageDiv.appendChild(beforeExplanationDiv);
+            // Add any text before the code block
+            const beforeText = fullContent.substring(lastIndex, match.index).trim();
+            if (beforeText) {
+                const textDiv = document.createElement('div');
+                textDiv.className = 'message-content';
+                textDiv.textContent = beforeText;
+                messageDiv.appendChild(textDiv);
             }
             
-            // Format and add the code block with the correct language
-            formatCodeMessage(messageDiv, code, language);
-            
-            // Get content after the last code block
-            const afterLastBacktick = fullContent.substring(fullContent.lastIndexOf('```') + 3).trim();
-            if (afterLastBacktick) {
-                const afterExplanationDiv = document.createElement('div');
-                afterExplanationDiv.className = 'message-content';
-                afterExplanationDiv.textContent = afterLastBacktick;
-                messageDiv.appendChild(afterExplanationDiv);
+            // Add the code block
+            const language = match[1] || 'text';
+            const code = match[2].trim();
+            if (code) {
+                formatCodeMessage(messageDiv, code, language);
             }
+            
+            lastIndex = match.index + match[0].length;
+        }
+        
+        // Add any remaining text after the last code block
+        const remainingText = fullContent.substring(lastIndex).trim();
+        if (remainingText) {
+            const textDiv = document.createElement('div');
+            textDiv.className = 'message-content';
+            textDiv.textContent = remainingText;
+            messageDiv.appendChild(textDiv);
+        }
+        
+        // Handle case where no code blocks were found
+        if (!hasCodeBlock && fullContent.trim()) {
+            const textDiv = document.createElement('div');
+            textDiv.className = 'message-content';
+            textDiv.textContent = fullContent;
+            messageDiv.appendChild(textDiv);
         }
     }
     else {
+        // Handle regular text messages
         const contentDiv = document.createElement('div');
         contentDiv.className = 'message-content';
-        contentDiv.textContent = messageData.content.message;
+        contentDiv.textContent = messageData.content.message || messageData.content || '';
         messageDiv.appendChild(contentDiv);
     }
     
+    // Add generation time for bot messages
     if (role === 'bot' && generationTime !== null) {
         const timeDiv = document.createElement('div');
         timeDiv.className = 'generation-time';
